@@ -28,12 +28,12 @@ type modelImpl struct {
 // with the ctx.lock held.
 func wrapModel(ctx *Context, c C.Z3_model) *Model {
 	impl := &modelImpl{ctx, c}
-	C.Z3_model_inc_ref(ctx.c, c)
+	/* C.Z3_model_inc_ref(ctx.c, c)
 	runtime.SetFinalizer(impl, func(impl *modelImpl) {
 		impl.ctx.do(func() {
 			C.Z3_model_dec_ref(impl.ctx.c, impl.c)
 		})
-	})
+	}) */
 	return &Model{impl, noEq{}}
 }
 

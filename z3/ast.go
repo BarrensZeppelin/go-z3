@@ -41,12 +41,12 @@ func wrapAST(ctx *Context, c C.Z3_ast) AST {
 	// This must be done atomically with the allocating function.
 	// If we allocate two objects without incrementing the
 	// refcount on the first, Z3 will reclaim the first object!
-	C.Z3_inc_ref(ctx.c, c)
-	runtime.SetFinalizer(impl, func(impl *astImpl) {
+	/* c.z3_inc_ref(ctx.c, c)
+	runtime.setfinalizer(impl, func(impl *astimpl) {
 		impl.ctx.do(func() {
-			C.Z3_dec_ref(impl.ctx.c, impl.c)
+			c.z3_dec_ref(impl.ctx.c, impl.c)
 		})
-	})
+	}) */
 	return AST{impl, noEq{}}
 }
 

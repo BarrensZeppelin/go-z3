@@ -40,12 +40,14 @@ func NewSolver(ctx *Context) *Solver {
 	ctx.do(func() {
 		C.Z3_solver_inc_ref(ctx.c, impl.c)
 	})
-	runtime.SetFinalizer(impl, func(impl *solverImpl) {
-		impl.ctx.do(func() {
-			C.Z3_solver_dec_ref(impl.ctx.c, impl.c)
-		})
-	})
 	return &Solver{impl, noEq{}}
+}
+
+func (s *Solver) Dispose() {
+	impl := s.solverImpl
+	impl.ctx.do(func() {
+		C.Z3_solver_dec_ref(impl.ctx.c, impl.c)
+	})
 }
 
 // Assert adds val to the set of predicates that must be satisfied.

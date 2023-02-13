@@ -99,10 +99,7 @@ func NewContext(config *Config) *Context {
 		}
 	}
 	// Construct the Z3_context.
-	impl := &contextImpl{C.Z3_mk_context_rc(cfg)}
-	runtime.SetFinalizer(impl, func(impl *contextImpl) {
-		C.Z3_del_context(impl.c)
-	})
+	impl := &contextImpl{C.Z3_mk_context(cfg)}
 	ctx := &Context{
 		impl,
 		make(map[string]C.Z3_symbol),
@@ -124,11 +121,11 @@ func NewContext(config *Config) *Context {
 //
 // The following are commonly useful parameters:
 //
-//	timeout           uint    Timeout in milliseconds used for solvers (default: ∞)
-//	auto_config       bool    Use heuristics to automatically select solver and configure it (default: true)
-//	proof             bool    Enable proof generation (default: false)
-//	model             bool    Enable model generation for solvers by default (default: true)
-//      unsat_core        bool    Enable unsat core generation for solvers by default (default: false)
+//		timeout           uint    Timeout in milliseconds used for solvers (default: ∞)
+//		auto_config       bool    Use heuristics to automatically select solver and configure it (default: true)
+//		proof             bool    Enable proof generation (default: false)
+//		model             bool    Enable model generation for solvers by default (default: true)
+//	     unsat_core        bool    Enable unsat core generation for solvers by default (default: false)
 //
 // Most of these can be changed after a Context is created using
 // Context.Config().
@@ -201,6 +198,10 @@ func (ctx *Context) SetExtra(key, value interface{}) {
 		}
 		ctx.extra[key] = value
 	}
+}
+
+func (ctx *Context) Dispose() {
+	C.Z3_del_context(ctx.contextImpl.c)
 }
 
 // do calls f with a per-context lock held.
