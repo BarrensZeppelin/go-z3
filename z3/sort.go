@@ -6,6 +6,7 @@ package z3
 
 import (
 	"runtime"
+	"sync/atomic"
 )
 
 /*
@@ -36,6 +37,7 @@ type sortImpl struct {
 // the ctx.lock held.
 func wrapSort(ctx *Context, c C.Z3_sort, kind Kind) Sort {
 	C.Z3_inc_ref(ctx.c, C.Z3_sort_to_ast(ctx.c, c))
+	atomic.AddInt32(&oCnt, 1)
 	if kind == KindUnknown {
 		kind = Kind(C.Z3_get_sort_kind(ctx.c, c))
 	}
@@ -43,6 +45,7 @@ func wrapSort(ctx *Context, c C.Z3_sort, kind Kind) Sort {
 	runtime.SetFinalizer(impl, func(impl *sortImpl) {
 		impl.ctx.do(func() {
 			C.Z3_dec_ref(impl.ctx.c, C.Z3_sort_to_ast(impl.ctx.c, impl.c))
+			atomic.AddInt32(&oCnt, -1)
 		})
 	})
 	return Sort{impl, noEq{}}

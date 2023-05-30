@@ -6,6 +6,7 @@ package z3
 
 import (
 	"runtime"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -41,9 +42,11 @@ func wrapAST(ctx *Context, c C.Z3_ast) AST {
 	// This must be done atomically with the allocating function.
 	// If we allocate two objects without incrementing the
 	// refcount on the first, Z3 will reclaim the first object!
+	atomic.AddInt32(&oCnt, 1)
 	C.Z3_inc_ref(ctx.c, c)
 	runtime.SetFinalizer(impl, func(impl *astImpl) {
 		impl.ctx.do(func() {
+			atomic.AddInt32(&oCnt, -1)
 			C.Z3_dec_ref(impl.ctx.c, impl.c)
 		})
 	})

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -82,6 +83,10 @@ func goZ3ErrorHandler(ctx C.Z3_context, e C.Z3_error_code) {
 	panic(C.GoString(msg))
 }
 
+func init() {
+	C.Z3_toggle_warning_messages(true)
+}
+
 // NewContext returns a new Z3 context with the given configuration.
 //
 // The config argument must have been created with NewContextConfig.
@@ -102,6 +107,9 @@ func NewContext(config *Config) *Context {
 	impl := &contextImpl{C.Z3_mk_context_rc(cfg)}
 	runtime.SetFinalizer(impl, func(impl *contextImpl) {
 		C.Z3_del_context(impl.c)
+		if atomic.AddInt32(&cCnt, -1) == 0 {
+			C.Z3_finalize_memory()
+		}
 	})
 	ctx := &Context{
 		impl,
@@ -111,6 +119,7 @@ func NewContext(config *Config) *Context {
 		nil,
 		sync.Mutex{},
 	}
+	atomic.AddInt32(&cCnt, 1)
 	// Install an error handler that turns errors into Go panics.
 	// This error handler is equivalent to a longjmp on the C++
 	// side, but Z3 is actually designed to handle that, which is

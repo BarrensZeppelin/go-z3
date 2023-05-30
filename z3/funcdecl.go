@@ -6,6 +6,7 @@ package z3
 
 import (
 	"runtime"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -37,9 +38,11 @@ type funcDeclImpl struct {
 // called with the ctx.lock held.
 func wrapFuncDecl(ctx *Context, c C.Z3_func_decl) FuncDecl {
 	impl := &funcDeclImpl{ctx, c}
+	atomic.AddInt32(&oCnt, 1)
 	C.Z3_inc_ref(ctx.c, C.Z3_func_decl_to_ast(ctx.c, c))
 	runtime.SetFinalizer(impl, func(impl *funcDeclImpl) {
 		impl.ctx.do(func() {
+			atomic.AddInt32(&oCnt, -1)
 			C.Z3_dec_ref(impl.ctx.c, C.Z3_func_decl_to_ast(impl.ctx.c, impl.c))
 		})
 	})

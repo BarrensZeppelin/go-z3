@@ -4,7 +4,10 @@
 
 package z3
 
-import "runtime"
+import (
+	"runtime"
+	"sync/atomic"
+)
 
 /*
 #cgo LDFLAGS: -lz3
@@ -38,11 +41,13 @@ func NewSolver(ctx *Context) *Solver {
 		}
 	})
 	ctx.do(func() {
+		atomic.AddInt32(&sCnt, 1)
 		C.Z3_solver_inc_ref(ctx.c, impl.c)
 	})
 	runtime.SetFinalizer(impl, func(impl *solverImpl) {
 		impl.ctx.do(func() {
 			C.Z3_solver_dec_ref(impl.ctx.c, impl.c)
+			atomic.AddInt32(&sCnt, -1)
 		})
 	})
 	return &Solver{impl, noEq{}}
